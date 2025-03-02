@@ -1,7 +1,8 @@
 ###### CUPS云打印页面
+![image](https://github.com/user-attachments/assets/b464cb4a-d997-4763-bdce-41e7ff7f41f7)
 
 # 测试平台
-刷了Armbian当作CUPS打印服务器的N1盒子。为了方便手机远程打印（安卓手机貌似还不支持添加IPv6打印机），用**deepseek**做了一个打印页面，目前仅支持打印PDF。
+刷了Armbian当作CUPS打印服务器的N1盒子。为了方便手机远程打印（安卓手机貌似还不支持添加IPv6打印机），用**deepseek**做了一个打印页面，结合IPv6使用很便利。
 ```bash
 pico@armbian:~/cloud5$ cat /etc/os-release 
 PRETTY_NAME="Armbian 25.2.2 bullseye"
@@ -49,6 +50,7 @@ sudo systemctl start cupscloud
 # 特性
 1. 可以选择CUPS服务器中配置好的任意打印机；
 2. 可以正确识别CUPS中预设的纸张尺寸，默认尺寸与CUPS默认值保持一致；
-3. 可以正确识别CUPS中预设的打印质量。
+3. 可以正确识别CUPS中预设的打印质量;
+4. 移动端适配。
 # 已知局限
 仅支持打印PDF。
