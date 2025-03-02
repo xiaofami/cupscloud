@@ -53,4 +53,5 @@ sudo systemctl start cupscloud
 3. 可以正确识别CUPS中预设的打印质量;
 4. 移动端适配。
 # 已知局限
-仅支持打印PDF。
+1. 仅支持打印PDF;
+2. 暂无法双面打印。
