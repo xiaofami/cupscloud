@@ -19,6 +19,23 @@ ARMBIAN_PRETTY_NAME="Armbian 25.2.2 bullseye"
 ```bash
 sudo apt install python3-flask cups python3-cups qpdf
 ```
+# 安装为系统服务
+创建服务文件 `/etc/systemd/system/cloudprint.service`：
+```bash
+[Unit]
+Description=Cloud Print Service
+After=network.target
+
+[Service]
+User=你的用户名
+WorkingDirectory=/home/你的用户名/cupscloud
+ExecStart=/usr/bin/python3 app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
 # 特性
 1. 可以选择CUPS服务器中配置好的任意打印机；
 2. 可以正确识别CUPS中预设的纸张尺寸，默认尺寸与CUPS默认值保持一致；
