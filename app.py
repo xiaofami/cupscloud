@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = '/tmp/print_uploads'
-app.config['MAX_CONTENT_LENGTH'] = 1600 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'ps', 'txt', 'docx'}
 
 logging.basicConfig(level=logging.INFO)
@@ -43,7 +43,9 @@ def parse_printer_options(output):
         (r'(?i)(PageSize|Media Size)\s*[:=]\s*(.*)', 'media_sizes'),
         (r'(?i)(InputSlot|Media Source)\s*[:=]\s*(.*)', 'input_slots'),
         (r'(?i)(Resolution|Output Resolution|MediaType|Print Quality)\s*[:=]\s*(.*)', 'quality_options'),
-        (r'(?i)(Brightness|Contrast)\s*[:=]\s*(.*)', 'advanced_options')
+        (r'(?i)(Brightness|Contrast)\s*[:=]\s*(.*)', 'advanced_options'),
+        # 新增双面打印选项检测
+        (r'(?i)(sides|Duplex)\s*[:=]\s*(.*)', 'duplex_options')
     ]
 
     for line in output.split('\n'):
@@ -53,7 +55,7 @@ def parse_printer_options(output):
             if match:
                 raw_values = match.group(2).split()
                 
-                # 新增加默认值处理逻辑
+                # 处理默认值
                 clean_values = []
                 default_value = None
                 
@@ -66,12 +68,10 @@ def parse_printer_options(output):
                 seen = set()
                 deduped = []
                 
-                # 先添加默认值
                 if default_value:
                     deduped.append(default_value)
                     seen.add(default_value)
                 
-                # 添加其他值并排序
                 others = sorted(
                     [v.replace('*', '') for v in raw_values if v != default_value],
                     key=lambda x: x.lower()
@@ -113,7 +113,8 @@ def get_printer_options_route(printer_name):
         'media_sizes': options.get('media_sizes', []),
         'input_slots': options.get('input_slots', []),
         'quality_options': options.get('quality_options', []),
-        'advanced_options': options.get('advanced_options', [])
+        'advanced_options': options.get('advanced_options', []),
+        'duplex_options': options.get('duplex_options', [])  # 新增双面打印选项
     })
 
 @app.route('/upload', methods=['POST'])
@@ -170,14 +171,30 @@ def upload_file():
         if params['contrast']:
             options.append(f'Contrast={params["contrast"]}')
         
+        # 修复双面打印逻辑
+        duplex_mode = 'two-sided-long-edge'  # 默认双面模式
+        if params['duplex'] == 'true':
+            # 检查打印机支持的双面模式
+            printer_opts = get_printer_options(params['printer'])
+            if 'duplex_options' in printer_opts:
+                if 'DuplexTumble' in printer_opts['duplex_options']:
+                    duplex_mode = 'DuplexTumble'
+                elif 'DuplexNoTumble' in printer_opts['duplex_options']:
+                    duplex_mode = 'DuplexNoTumble'
+            options.append(f'sides={duplex_mode}')
+        else:
+            options.append('sides=one-sided')
+
         options.extend([
-            f'media={params["media"]}',
-            f'sides={"two-sided-long-edge" if params["duplex"] == "true" else "one-sided"}'
+            f'media={params["media"]}'
         ])
 
         for opt in options:
             cmd.extend(['-o', opt])
         cmd.append(upload_path)
+
+        # 记录最终打印命令
+        logger.info(f"执行打印命令: {' '.join(cmd)}")
 
         result = subprocess.run(
             cmd,
@@ -193,6 +210,7 @@ def upload_file():
             })
         else:
             error_msg = result.stderr.decode() or 'Unknown error'
+            logger.error(f"打印失败: {error_msg}")
             return jsonify({'error': f'Print failed: {error_msg}'}), 500
 
     except Exception as e:
