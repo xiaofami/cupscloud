@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = '/tmp/print_uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 1600 * 1024 * 1024
 app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'ps', 'txt', 'docx'}
 
 logging.basicConfig(level=logging.INFO)
