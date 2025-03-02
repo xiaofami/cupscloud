@@ -8,55 +8,111 @@
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
     <style>
         :root {
-            --primary-color: #2563eb;
-            --success-color: #16a34a;
-            --danger-color: #dc2626;
+            --primary: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --border: #e2e8f0;
         }
 
         body {
-            background: #f8f9fa;
+            background: #f8fafc;
             min-height: 100vh;
             padding: 1rem;
         }
 
         .print-card {
-            max-width: 900px;
+            max-width: 800px;
             margin: 0 auto;
+            background: white;
             border-radius: 1rem;
-            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
             overflow: hidden;
+            border: 1px solid var(--border);
         }
 
         .card-header {
-            background: var(--primary-color);
+            background: var(--primary);
             color: white;
             padding: 1.5rem;
+            border-bottom: 0;
+        }
+
+        .card-title {
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
 
         .form-section {
             padding: 1.5rem;
-            background: white;
         }
 
-        .option-label {
+        .form-label {
             font-weight: 500;
-            color: #495057;
+            color: #475569;
             margin-bottom: 0.5rem;
         }
 
         .form-control, .form-select {
             border-radius: 0.75rem;
             padding: 0.75rem 1rem;
-            border: 2px solid #dee2e6;
+            border: 2px solid var(--border);
             transition: all 0.2s;
         }
 
-        .form-range {
-            height: 2rem;
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
-        .form-range::-webkit-slider-thumb {
-            background: var(--primary-color);
+        .form-check-input {
+            width: 2.5em;
+            height: 1.5em;
+        }
+
+        .advanced-options {
+            background: #f8fafc;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin-top: 1.5rem;
+        }
+
+        .loader {
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 3px solid #e2e8f0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn-print {
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-print:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .alert {
+            border-radius: 0.75rem;
+            padding: 1rem;
         }
 
         @media (max-width: 768px) {
@@ -64,23 +120,30 @@
                 padding: 1rem;
             }
             
-            .advanced-options .row > div {
-                margin-bottom: 1rem;
+            .card-header {
+                padding: 1rem;
+            }
+            
+            .form-control, .form-select {
+                font-size: 0.9rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="print-card card">
+    <div class="print-card">
         <div class="card-header">
-            <h3 class="mb-0"><i class="bi bi-printer me-2"></i>智能云打印</h3>
+            <h1 class="card-title">
+                <i class="bi bi-printer"></i>
+                智能云打印服务
+            </h1>
         </div>
         
         <div class="form-section">
             <form id="printForm">
                 <!-- 打印机选择 -->
                 <div class="mb-4">
-                    <label class="option-label">选择打印机</label>
+                    <label class="form-label">选择打印机</label>
                     <select name="printer" id="printer" class="form-select" required>
                         {% for printer in printers %}
                         <option value="{{ printer }}">{{ printer }}</option>
@@ -90,190 +153,185 @@
 
                 <!-- 文件上传 -->
                 <div class="mb-4">
-                    <label class="option-label">选择文件</label>
-                    <input type="file" name="file" class="form-control" required 
-                           accept=".pdf,.ps,.txt,.docx">
+                    <label class="form-label">选择文件</label>
+                    <div class="input-group">
+                        <input type="file" name="file" id="file" class="form-control" required 
+                               accept=".pdf,.ps,.txt,.docx">
+                    </div>
+                    <small class="text-muted">支持格式：PDF, PS, TXT, DOCX（最大16MB）</small>
                 </div>
 
                 <!-- 基本设置 -->
                 <div class="row g-3 mb-4">
-                    <div class="col-md-4">
-                        <label class="option-label">打印份数</label>
-                        <input type="number" name="copies" class="form-control" 
-                               value="1" min="1" max="99" required>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">打印份数</label>
+                        <input type="number" name="copies" class="form-control" value="1" min="1" required>
                     </div>
-                    <div class="col-md-4">
-                        <label class="option-label">纸张尺寸</label>
+                    
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">纸张尺寸</label>
                         <select name="media" class="form-select" id="mediaSelect" required>
                             <!-- 动态加载 -->
                         </select>
                     </div>
-                    <div class="col-md-4">
-                        <label class="option-label">双面打印</label>
+                    
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">双面打印</label>
                         <div class="form-check form-switch mt-2">
-                            <input type="checkbox" name="duplex" class="form-check-input" 
-                                   role="switch" style="width: 3em;">
+                            <input type="checkbox" name="duplex" class="form-check-input" role="switch">
                         </div>
                     </div>
                 </div>
 
                 <!-- 高级设置 -->
-                <div class="advanced-options border-top pt-4">
-                    <h5 class="mb-4"><i class="bi bi-gear me-2"></i>高级设置</h5>
-
+                <div class="advanced-options">
+                    <h5 class="mb-3 text-primary"><i class="bi bi-gear me-2"></i>高级设置</h5>
+                    
                     <div class="row g-3">
-                        <!-- 页码范围 -->
                         <div class="col-12 col-md-6">
-                            <label class="option-label">页码范围</label>
+                            <label class="form-label">页码范围</label>
                             <input type="text" name="pages" class="form-control" 
-                                   placeholder="如: 1-5,8">
+                                   placeholder="示例：1-5,8,10-12">
                         </div>
                         
-                        <!-- 奇偶页 -->
                         <div class="col-12 col-md-6">
-                            <label class="option-label">打印页面</label>
-                            <select name="page_set" class="form-select">
-                                <option value="all">全部页面</option>
-                                <option value="odd">仅奇数页</option>
-                                <option value="even">仅偶数页</option>
-                            </select>
-                        </div>
-
-                        <!-- 纸盒 -->
-                        <div class="col-12 col-md-4">
-                            <label class="option-label">进纸纸盒</label>
+                            <label class="form-label">纸盒选择</label>
                             <select name="input_slot" class="form-select" id="traySelect">
                                 <!-- 动态加载 -->
                             </select>
                         </div>
-
-                        <!-- 打印质量 -->
-                        <div class="col-12 col-md-4">
-                            <label class="option-label">打印质量</label>
+                        
+                        <div class="col-12 col-md-6">
+                            <label class="form-label">打印质量</label>
                             <select name="quality" class="form-select" id="qualitySelect">
                                 <!-- 动态加载 -->
                             </select>
-                        </div>
-
-                        <!-- 高级选项 -->
-                        <div class="col-12 col-md-4" id="advancedControls">
-                            <!-- 动态加载亮度/对比度 -->
                         </div>
                     </div>
                 </div>
 
                 <!-- 提交按钮 -->
-                <div class="mt-4 pt-3 border-top">
-                    <button type="submit" class="btn btn-primary w-100 py-2">
-                        <i class="bi bi-send me-2"></i>立即打印
+                <div class="mt-4 d-flex justify-content-end align-items-center gap-3">
+                    <div class="loader"></div>
+                    <button type="submit" class="btn btn-print">
+                        <i class="bi bi-send"></i>
+                        提交打印
                     </button>
                 </div>
             </form>
 
             <!-- 消息通知 -->
-            <div id="message" class="mt-3"></div>
+            <div id="message" class="mt-4"></div>
         </div>
     </div>
 
     <script>
-        async function loadPrinterOptions(printer) {
+        // 动态加载打印机选项
+        async function loadPrinterOptions(printerName) {
+            const loader = document.querySelector('.loader');
+            const mediaSelect = document.getElementById('mediaSelect');
+            const traySelect = document.getElementById('traySelect');
+            const qualitySelect = document.getElementById('qualitySelect');
+
+            loader.style.display = 'block';
+            
             try {
-                const res = await fetch(`/api/printer_options/${encodeURIComponent(printer)}`);
-                const options = await res.json();
+                const response = await fetch(`/api/printer_options/${encodeURIComponent(printerName)}`);
+                const options = await response.json();
 
-                // 纸张尺寸
-                const mediaSelect = document.getElementById('mediaSelect');
+                // 更新纸张尺寸
                 mediaSelect.innerHTML = options.media_sizes.map(size => 
-                    `<option value="${size}">${formatName(size)}</option>`
+                    `<option value="${size}">${formatOptionName(size)}</option>`
                 ).join('');
-                if (options.media_sizes.length > 0) mediaSelect.value = options.media_sizes[0];
 
-                // 纸盒选择
-                const traySelect = document.getElementById('traySelect');
+                // 更新纸盒选项
                 traySelect.innerHTML = [
                     '<option value="">自动选择</option>',
                     ...options.input_slots.map(tray => 
-                        `<option value="${tray}">${formatName(tray)}</option>`
+                        `<option value="${tray}">${formatOptionName(tray)}</option>`
                     )
                 ].join('');
 
-                // 打印质量
-                const qualitySelect = document.getElementById('qualitySelect');
+                // 更新打印质量
                 qualitySelect.innerHTML = [
                     '<option value="">默认质量</option>',
                     ...options.quality_options.map(quality => 
-                        `<option value="${quality}">${formatName(quality)}</option>`
+                        `<option value="${quality}">${formatOptionName(quality)}</option>`
                     )
-                ].join('');
-
-                // 亮度/对比度控制
-                const advancedDiv = document.getElementById('advancedControls');
-                advancedDiv.innerHTML = [
-                    options.brightness.options.length ? `
-                        <div class="mb-3">
-                            <label class="option-label">亮度</label>
-                            <input type="range" name="brightness" class="form-range"
-                                   min="${Math.min(...options.brightness.options)}" 
-                                   max="${Math.max(...options.brightness.options)}"
-                                   value="${options.brightness.default}">
-                        </div>
-                    ` : '',
-                    options.contrast.options.length ? `
-                        <div class="mb-3">
-                            <label class="option-label">对比度</label>
-                            <input type="range" name="contrast" class="form-range"
-                                   min="${Math.min(...options.contrast.options)}" 
-                                   max="${Math.max(...options.contrast.options)}"
-                                   value="${options.contrast.default}">
-                        </div>
-                    ` : ''
                 ].join('');
 
             } catch (error) {
                 console.error('加载选项失败:', error);
+            } finally {
+                loader.style.display = 'none';
             }
         }
 
-        function formatName(str) {
-            return str.replace(/_/g, ' ')
-                     .replace(/([a-z])([A-Z])/g, '$1 $2')
-                     .toLowerCase()
-                     .replace(/\b\w/g, c => c.toUpperCase());
+        function formatOptionName(name) {
+            return name
+                .replace(/_/g, ' ')
+                .replace(/([a-z])([A-Z])/g, '$1 $2')
+                .replace(/\b\w/g, c => c.toUpperCase());
         }
 
-        // 初始化
+        // 打印机选择变化事件
         document.getElementById('printer').addEventListener('change', function(e) {
             loadPrinterOptions(e.target.value);
         });
+
+        // 初始化加载默认打印机选项
         loadPrinterOptions(document.getElementById('printer').value);
 
         // 表单提交处理
         document.getElementById('printForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const formData = new FormData(this);
-            
+            const form = e.target;
+            const btn = form.querySelector('button[type="submit"]');
+            const loader = form.querySelector('.loader');
+            const messageDiv = document.getElementById('message');
+
+            btn.disabled = true;
+            loader.style.display = 'block';
+
             try {
-                const res = await fetch('/upload', {
+                const formData = new FormData(form);
+                
+                // 参数验证
+                if (!formData.get('media')) {
+                    throw new Error('请选择纸张尺寸');
+                }
+
+                const response = await fetch('/upload', {
                     method: 'POST',
                     body: formData
                 });
-                const result = await res.json();
+
+                const result = await response.json();
                 
-                if (res.ok) {
-                    showMessage(`✅ ${result.message} (任务ID: ${result.job_id})`, 'success');
+                if (response.ok) {
+                    showMessage(`✅ ${result.message}<br><small>任务ID: ${result.job_id}</small>`, 'success');
+                    form.reset();
                 } else {
-                    showMessage(`❌ 错误: ${result.error}`, 'danger');
+                    throw new Error(result.error || '未知错误');
                 }
             } catch (error) {
-                showMessage('❌ 网络请求失败，请稍后重试', 'danger');
+                showMessage(`❌ 错误: ${error.message}`, 'danger');
+            } finally {
+                btn.disabled = false;
+                loader.style.display = 'none';
             }
         });
 
-        function showMessage(text, type) {
-            const div = document.getElementById('message');
-            div.innerHTML = `
-                <div class="alert alert-${type} alert-dismissible fade show">
-                    ${text}
+        function showMessage(content, type) {
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            const messageDiv = document.getElementById('message');
+            
+            messageDiv.innerHTML = `
+                <div class="alert ${alertClass} alert-dismissible fade show">
+                    <div class="d-flex align-items-center">
+                        <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-2"></i>
+                        <div>${content}</div>
+                    </div>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             `;
