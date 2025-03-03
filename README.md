@@ -59,4 +59,5 @@ sudo systemctl start cupscloud
 4. 可以直观看到实际调用的lp打印命令；
 5. 移动端适配。
 # 已知局限
-1. 仅支持打印PDF。PostScript应该也是支持的，不过没测试。
+1. 仅支持打印PDF。PostScript应该也是支持的，不过没测试;
+2. 测试EPSON M1128打印机，选择不同打印质量没有效果。
