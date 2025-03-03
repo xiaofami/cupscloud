@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能云打印服务</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+        }
+
+        body {
+            background: #f8f9fa;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .print-card {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
+        }
+
+        .card-header {
+            background: var(--primary);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 1rem 1rem 0 0;
+        }
+
+        .form-section {
+            padding: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #475569;
+        }
+
+        .form-control, .form-select {
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+
+        .debug-panel {
+            background: #f8f9fa;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin-top: 1.5rem;
+        }
+
+        .command-preview {
+            font-family: monospace;
+            background: white;
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            word-break: break-all;
+            white-space: pre-wrap;
+        }
+
+        .loader {
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 3px solid #e2e8f0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .print-card {
+                border-radius: 0;
+            }
+            .form-section {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-card">
+        <div class="card-header">
+            <h3 class="mb-0"><i class="bi bi-printer me-2"></i>智能云打印服务</h3>
+        </div>
+        
+        <div class="form-section">
+            <form id="printForm">
+                <!-- 打印机选择 -->
+                <div class="mb-4">
+                    <label class="form-label">选择打印机</label>
+                    <select name="printer" id="printer" class="form-select" required>
+                        {% for printer in printers %}
+                        <option value="{{ printer }}">{{ printer }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- 文件上传 -->
+                <div class="mb-4">
+                    <label class="form-label">选择文件</label>
+                    <input type="file" name="file" id="file" class="form-control" required 
+                           accept=".pdf,.ps,.txt,.docx">
+                </div>
+
+                <!-- 基本设置 -->
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">打印份数</label>
+                        <input type="number" name="copies" class="form-control" value="1" min="1" required>
+                    </div>
+                    
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">纸张尺寸</label>
+                        <select name="media" class="form-select" id="mediaSelect" required></select>
+                    </div>
+                    
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">双面打印</label>
+                        <div class="form-check form-switch mt-2">
+                            <input type="checkbox" name="duplex" class="form-check-input" role="switch">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 高级设置 -->
+                <div class="border-top pt-4">
+                    <h5 class="mb-4 text-primary"><i class="bi bi-gear me-2"></i>高级设置</h5>
+                    
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label">页码范围</label>
+                            <input type="text" name="pages" class="form-control" 
+                                   placeholder="示例：1-3,5,7-9">
+                        </div>
+                        
+                        <div class="col-12 col-md-6">
+                            <label class="form-label">纸盒选择</label>
+                            <select name="input_slot" class="form-select" id="traySelect">
+                                <option value="">自动选择</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label">打印质量</label>
+                            <select name="quality" class="form-select" id="qualitySelect">
+                                <option value="">默认质量</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 提交按钮 -->
+                <div class="mt-4 d-flex justify-content-end align-items-center gap-3">
+                    <div class="loader"></div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send me-2"></i>提交打印
+                    </button>
+                </div>
+            </form>
+
+            <!-- 调试信息 -->
+            <div class="debug-panel mt-4">
+                <h5 class="mb-3"><i class="bi bi-terminal me-2"></i>调试信息</h5>
+                <div id="message"></div>
+                <div class="command-preview mt-3" id="commandPreview"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 动态加载打印机选项
+        async function loadPrinterOptions(printerName) {
+            const loader = document.querySelector('.loader');
+            const mediaSelect = document.getElementById('mediaSelect');
+            const traySelect = document.getElementById('traySelect');
+            const qualitySelect = document.getElementById('qualitySelect');
+
+            loader.style.display = 'block';
+            
+            try {
+                const response = await fetch(`/api/printer_options/${encodeURIComponent(printerName)}`);
+                const options = await response.json();
+
+                // 更新纸张尺寸
+                mediaSelect.innerHTML = options.media_sizes.map(size => 
+                    `<option value="${size}">${formatName(size)}</option>`
+                ).join('');
+
+                // 更新纸盒选项
+                traySelect.innerHTML = [
+                    '<option value="">自动选择</option>',
+                    ...options.input_slots.map(tray => 
+                        `<option value="${tray}">${formatName(tray)}</option>`
+                    )
+                ].join('');
+
+                // 更新打印质量
+                qualitySelect.innerHTML = [
+                    '<option value="">默认质量</option>',
+                    ...options.quality_options.map(quality => 
+                        `<option value="${quality}">${formatName(quality)}</option>`
+                    )
+                ].join('');
+
+            } catch (error) {
+                console.error('加载选项失败:', error);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        function formatName(name) {
+            return name.replace(/_/g, ' ')
+                      .replace(/([a-z])([A-Z])/g, '$1 $2')
+                      .replace(/\b\w/g, c => c.toUpperCase());
+        }
+
+        // 表单提交处理
+        document.getElementById('printForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const btn = form.querySelector('button');
+            const loader = form.querySelector('.loader');
+            const messageDiv = document.getElementById('message');
+            const commandPreview = document.getElementById('commandPreview');
+
+            btn.disabled = true;
+            loader.style.display = 'block';
+            commandPreview.textContent = '正在生成打印命令...';
+
+            try {
+                const formData = new FormData(form);
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+
+                // 显示调试信息
+                let statusHtml = '';
+                if (response.ok) {
+                    statusHtml = `
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle me-2"></i>
+                            ${result.message}<br>
+                            <small>任务ID: ${result.job_id}</small>
+                        </div>
+                    `;
+                } else {
+                    statusHtml = `
+                        <div class="alert alert-danger">
+                            <i class="bi bi-x-circle me-2"></i>
+                            ${result.error}
+                        </div>
+                    `;
+                }
+
+                commandPreview.innerHTML = `
+                    <div class="text-muted small">执行的打印命令：</div>
+                    <div class="text-break">${result.command}</div>
+                `;
+
+                messageDiv.innerHTML = statusHtml;
+
+            } catch (error) {
+                messageDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-x-circle me-2"></i>
+                        网络错误: ${error.message}
+                    </div>
+                `;
+                commandPreview.textContent = '无法获取打印命令';
+            } finally {
+                btn.disabled = false;
+                loader.style.display = 'none';
+            }
+        });
+
+        // 初始化打印机选项
+        document.getElementById('printer').addEventListener('change', function(e) {
+            loadPrinterOptions(e.target.value);
+        });
+        loadPrinterOptions(document.getElementById('printer').value);
+    </script>
+</body>
+</html>
