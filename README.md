@@ -1,5 +1,6 @@
 # CUPS云打印页面
-![cacf2c2400862bb5ba0024df92ffc81](https://github.com/user-attachments/assets/64792046-3593-4f7c-aaaa-0bb54eac7fa6)
+
+![Screenshot_2025_0303_230931](https://github.com/user-attachments/assets/617ee195-85c2-4fa9-9b45-58ae27a69874)
 
 
 ## 测试平台
@@ -57,7 +58,7 @@ sudo systemctl start cupscloud
 2. 可以正确识别CUPS中预设的纸张尺寸，默认尺寸与CUPS默认值保持一致；
 3. 可以正确识别CUPS中预设的打印质量;
 4. 可以直观看到实际调用的lp打印命令；
-5. 移动端适配。
+5. 移动端适配；
+6. 测试EPSON M1128打印机，选择不同打印质量会实际生效。
 # 已知局限
-1. 仅支持打印PDF。PostScript应该也是支持的，不过没测试;
-2. 测试EPSON M1128打印机，选择不同打印质量没有效果。
+仅支持打印PDF。PostScript应该也是支持的，不过未经测试。
